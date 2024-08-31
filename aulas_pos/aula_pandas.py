@@ -53,13 +53,59 @@ def prepararDados(dataFrame):
     print(dataFrame)
     return dataFrame
 
-
-
-def visualizacaoGrafica(dataFrme):
-    
+def exemploGrafico():
     plt.plot([1,2],[3,4],'r--')
     plt.show()
 
+def visualizacaoGrafica(dataFrame):
+    idade=dataFrame['Age']
+    sex=dataFrame['Sex']
+    plt.plot(sex,idade,'g^')
+    plt.show()
+    #plt.plot([1,2],[3,4],'r--')
+    # plt.show()
+
+def visualizacaoGraficaBarras(dataFrame):
+    dadosGrupo=dataFrame.groupby('Sex').groups
+    print(dadosGrupo)
+    
+    lb=[]
+    vl=[]
+
+    for grp in dadosGrupo:
+        print(grp)
+        lb.append(grp)
+        print(len(dadosGrupo[grp]))
+        vl.append(len(dadosGrupo[grp]))
+    
+    cores=['tab:red','tab:blue']
+    plt.bar(lb,vl,color=cores)
+    plt.show()
+
+def visualizacaoGraficaBarras2(dataFrame):
+    dadosGrupo=dataFrame.groupby('Embarked').groups
+    print(dadosGrupo)
+    
+    lb=[]
+    vl=[]
+
+    
+    for grp in dadosGrupo:
+        print(grp)
+        lb.append(str(grp))
+        print(len(dadosGrupo[grp]))
+        vl.append(len(dadosGrupo[grp]))
+    
+    cores=['tab:red','tab:blue','tab:green']
+    plt.bar(lb,vl,color=cores)
+    plt.show()
+
+def barras (df):
+    temp=df[['Sex','Survived']]
+    temp=temp.groupby('Sex').sum()
+    print(temp)
+    plt.bar(temp['Sex'],temp[1])
+    plt.show()
 
 url='C:\\Users\\aluno\\Desktop\\Thiago\\Aulas-Python\\aulas_pos\\dataset\\titanic.csv'
 # carrega o arquivo
@@ -69,7 +115,10 @@ df=prepararDados(df)
 
 print( df.head())
 
-
-print(visualizacaoGrafica(df))
+# print(exemploGrafico())
+# print(visualizacaoGrafica(df))
+# visualizacaoGraficaBarras(df)
+visualizacaoGraficaBarras2(df)
+#print(barras(df))
 #print(df['Sex','Survived'].plot(kind='bar'))
 
