@@ -46,77 +46,90 @@ def tratamento_dados(df):
 
     return df
 
+def insere_grafico_pizza (dados,axes,titulo,i,j):
+  
+    axes[i, j].pie(dados, autopct='%1.1f%%', startangle=90,pctdistance=1.2)
+    axes[i, j].set_title(titulo,loc="left")
+    axes[i, j].axis('equal')  # Para garantir que o gráfico seja um círculo
+    axes[i, j].legend(dados.index, title="Legenda", loc="lower left", bbox_to_anchor=(-0.1, 0), fontsize='small')
+    return axes
+def insere_grafico_linha(axes,agrupado,titulo,i,j,xlabel,ylabel,legenda):
+    for sexo in agrupado.index:
+        axes[0, 1].plot(agrupado.columns, agrupado.loc[sexo], marker='o', label=sexo)
+    axes[0, 1].set_title(titulo)
+    axes[0, 1].set_xlabel(xlabel)
+    axes[0, 1].set_ylabel(ylabel)
+    axes[0, 1].legend(title=legenda)
+    axes[0, 1].grid(True)
+    return axes
+
+def insere_grafico_barras(axes,contagem_racacor,i,j,titulo,xlabel,ylabel,paleta):
+    snb.barplot(x=contagem_racacor.index, y=contagem_racacor.values, palette=paleta, ax=axes[i, j])
+    axes[i, j].set_title(titulo)
+    axes[i, j].set_xlabel(xlabel)
+    axes[i, j].set_ylabel(ylabel)
+    axes[i, j].grid(axis='y')
+    return axes
+
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.ticker as ticker
+
+def insere_grafico_histograma(axes, idade, i, j):
+    intervalo_bins = range(5, 101, 5)
+    n, bins, patches = axes[i, j].hist(idade, bins=intervalo_bins, color='lightblue', edgecolor='black', rwidth=0.6)
+
+    for k in range(len(bins)-1):
+        if 10 <= bins[k] < 35:
+            patches[k].set_facecolor('crimson')
+        else:
+            patches[k].set_facecolor('darkblue')
+
+    axes[i, j].set_title('Distribuição das Idades: Destaques e Picos de Incidência', fontsize=14)
+    axes[i, j].set_xlabel('Idade', fontsize=12)
+    axes[i, j].set_ylabel('Total', fontsize=12)
+    axes[i, j].set_ylim(0, 12000)  # Ajuste do limite do eixo y
+    axes[i, j].xaxis.set_major_locator(ticker.MultipleLocator(5))
+    axes[i, j].yaxis.set_major_locator(ticker.MultipleLocator(1000))
+
+    for rect, label in zip(patches, n):
+        height = rect.get_height()
+        axes[i, j].text(rect.get_x() + rect.get_width() / 2, height, f'{int(label)}', ha='center', va='bottom', fontsize=10, color='black')
+
+    handles = [plt.Line2D([0], [0], color='crimson', lw=4),
+               plt.Line2D([0], [0], color='darkblue', lw=4)]
+    labels = ['Faixa 10-35 anos destacada', 'Outras faixas etárias']
+    axes[i, j].legend(handles=handles, labels=labels, loc='upper right', fontsize='small', title='Legenda', title_fontsize='small')
+
+    axes[i, j].grid(axis='y', linestyle='--', alpha=0.7)
+
+    return axes
+
 
 def gera_subplot(df):
     
     # Criar uma figura com subplots 3x2 (3 linhas, 2 colunas)
-    fig, axes = plt.subplots(3, 2, figsize=(15, 18))
+    fig, axes = plt.subplots(3, 2, figsize=(19, 20))
 
-    # Ajustar espaçamento entre os subplots
-    plt.subplots_adjust(hspace=0.4, wspace=0.4)
+# Ajustar espaçamento entre os subplots
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.3, hspace=0.5)
 
     # Gráfico de pizza - Distribuição por Sexo
-    sexo = df['SEXO'].value_counts()
-    axes[0, 0].pie(sexo, labels=sexo.index, autopct='%1.1f%%', startangle=90)
-    axes[0, 0].set_title('Distribuição por Sexo')
-    axes[0, 0].axis('equal')  # Para garantir que o gráfico seja um círculo
-
+    axes=insere_grafico_pizza( df['SEXO'].value_counts(),axes,'Distribuição por Sexo',0,0)
+    
     # Gráfico de linha - Distribuição por Sexo e Ano
-    agrupado = df.groupby(['SEXO', 'ano']).size().unstack()
-    for sexo in agrupado.index:
-        axes[0, 1].plot(agrupado.columns, agrupado.loc[sexo], marker='o', label=sexo)
-    axes[0, 1].set_title('Distribuição por Sexo e Ano')
-    axes[0, 1].set_xlabel('Ano')
-    axes[0, 1].set_ylabel('Total')
-    axes[0, 1].legend(title='Sexo')
-    axes[0, 1].grid(True)
+    axes=insere_grafico_linha(axes,df.groupby(['SEXO', 'ano']).size().unstack(),'Distribuição por Sexo e Ano',0,1,'Ano','Total','Sexo')
 
     # Gráfico de barras - Distribuição de Raça/Cor
-    contagem_racacor = df['RACACOR'].value_counts()
-    snb.barplot(x=contagem_racacor.index, y=contagem_racacor.values, palette='viridis', ax=axes[1, 0])
-    axes[1, 0].set_title('Distribuição de Raça/Cor')
-    axes[1, 0].set_xlabel('Raça/Cor')
-    axes[1, 0].set_ylabel('Total')
-    axes[1, 0].grid(axis='y')
-
+    axes=insere_grafico_barras(axes,df['RACACOR'].value_counts(),1,0,'Distribuição de Raça/Cor','Raça/Cor','Total','viridis')
+   
     # Gráfico de pizza - Distribuição por Estado Civil
-    estado_civil = df['ESTCIV'].value_counts()
-    axes[1, 1].pie(estado_civil, labels=estado_civil.index, autopct='%1.1f%%', startangle=90)
-    axes[1, 1].set_title('Distribuição por Estado Civil')
-    axes[1, 1].axis('equal')  # Para garantir que o gráfico seja um círculo
+    axes=insere_grafico_pizza(df['ESTCIV'].value_counts(),axes,'Distribuição por Estado Civil',1,1)
+
 
     # Histograma - Distribuição das Idades com destaque
-    idade = df['idade']
-    intervalo_bins = range(5, 101, 5)
-    n, bins, patches = axes[2, 0].hist(idade, bins=intervalo_bins, color='lightgray', edgecolor='black')
-
-    # Realçar a faixa etária de 15 a 30 anos
-    for i in range(len(bins)-1):
-        if 15 <= bins[i] < 30:
-            patches[i].set_facecolor('crimson')
-
-    # Identificar as idades com maior incidência (top 3 picos)
-    max_indices = np.argsort(n)[-3:]
-    for i in max_indices:
-        patches[i].set_facecolor('orange')
-
-    axes[2, 0].set_title('Distribuição das Idades: 15-30 Anos e Picos de Incidência')
-    axes[2, 0].set_xlabel('Idade')
-    axes[2, 0].set_ylabel('Total')
-    axes[2, 0].xaxis.set_major_locator(ticker.MultipleLocator(5))
-    axes[2, 0].yaxis.set_major_locator(ticker.MultipleLocator(500))
-
-    # Adicionar anotações e legenda
-    axes[2, 0].annotate('Faixa crítica: 15-30 anos', xy=(20, max(n) * 0.9), xytext=(35, max(n) * 0.8),
-                        arrowprops=dict(facecolor='crimson', shrink=0.05), fontsize=12, color='black')
-
-    for i in max_indices:
-        axes[2, 0].annotate(f'Pico: {int(bins[i])}-{int(bins[i+1])}', xy=(bins[i], n[i]), xytext=(bins[i]+5, n[i] + 300),
-                            arrowprops=dict(facecolor='orange', shrink=0.05), fontsize=10, color='black')
-
-    axes[2, 0].legend(['Faixa 15-30 anos destacada', 'Maiores incidências'], loc='upper right')
-    axes[2, 0].grid(axis='y')
-
+    axes=insere_grafico_histograma(axes,df['idade'],2,0)
+   
     # Remover o último subplot (vazio)
     axes[2, 1].remove()
 
@@ -126,7 +139,7 @@ def gera_subplot(df):
 
 
 def gera_grafico_iterativo(df):
-# Criando a figura de subplots (3x2) para compatibilidade com gráficos de pizza
+    # Criando a figura de subplots (3x2) para compatibilidade com gráficos de pizza
     fig = sp.make_subplots(
         rows=3, cols=2,
         subplot_titles=("Distribuição por Sexo", "Distribuição por Sexo e Ano",
@@ -163,8 +176,8 @@ def gera_grafico_iterativo(df):
     colors = ['lightgray'] * len(hist_data)  # Inicialmente todas as barras são cinza
     for i, bin_range in enumerate(hist_data.index):
         start_age = int(bin_range.split('-')[0])
-        if 15 <= start_age < 30:
-            colors[i] = 'crimson'
+        if start_age < 30:
+           colors[i] = 'crimson'
     for i in hist_data.nlargest(3).index:
         idx = list(hist_data.index).index(i)
         colors[idx] = 'orange'
