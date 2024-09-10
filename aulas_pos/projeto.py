@@ -71,9 +71,7 @@ def insere_grafico_barras(axes,contagem_racacor,i,j,titulo,xlabel,ylabel,paleta)
     axes[i, j].grid(axis='y')
     return axes
 
-import matplotlib.pyplot as plt
-import numpy as np
-import matplotlib.ticker as ticker
+
 
 def insere_grafico_histograma(axes, idade, i, j):
     intervalo_bins = range(5, 101, 5)
@@ -216,3 +214,5 @@ print(df.head())
 
 gera_subplot(df)
 gera_grafico_iterativo(df)
+
+
