@@ -1,4 +1,3 @@
-import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as snb
@@ -6,7 +5,9 @@ import numpy as np
 import plotly.graph_objs as go
 import plotly.subplots as sp
 from datetime import datetime
-
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 
 def calcular_media_escolaridade(x):
     try:
@@ -36,11 +37,13 @@ def tratamento_dados(df):
     df['DTOBITO'] = pd.to_datetime(df['DTOBITO'], format='%Y-%m-%d', errors='coerce')
     df['idade'] = df.apply(lambda row: calcular_idade(row['DTNASC'], row['DTOBITO']), axis=1)
     df.drop(columns=['DTNASC'], inplace=True)
-    df = df.loc[(df['idade'] >= 0) & (df['idade'] <= 110)]
+  
+    df = df.loc[(df['idade'] >= 0) & (df['idade'] <= 110)].copy()
 
-    df['ESTCIV'] = df['ESTCIV'].replace(r'/a', '(a)',regex=True)
+    df.loc[:, 'ESTCIV'] = df['ESTCIV'].replace(r'/a', '(a)', regex=True)
 
-    df.drop_duplicates()
+    
+    df.drop_duplicates(inplace=True)
     df.dropna(inplace=True)
 
 
@@ -64,7 +67,8 @@ def insere_grafico_linha(axes,agrupado,titulo,i,j,xlabel,ylabel,legenda):
     return axes
 
 def insere_grafico_barras(axes,contagem_racacor,i,j,titulo,xlabel,ylabel,paleta):
-    snb.barplot(x=contagem_racacor.index, y=contagem_racacor.values, palette=paleta, ax=axes[i, j])
+ 
+    snb.barplot(x=contagem_racacor.index, y=contagem_racacor.values, hue=contagem_racacor.index, palette=paleta, ax=axes[i, j], legend=False)
     axes[i, j].set_title(titulo)
     axes[i, j].set_xlabel(xlabel)
     axes[i, j].set_ylabel(ylabel)
@@ -196,23 +200,13 @@ def gera_grafico_iterativo(df):
     # Exibir o gráfico
     fig.show()
 
+def codifica_coluna(coluna):
+    # codifica dados não numericos em numericos
+    le=LabelEncoder()
+    coluna=le.fit_transform(coluna)
 
+    return coluna
 
-
-
-
-df=pd.read_csv('aulas_pos\\dataset\\suicidios_2010_a_2019.csv')
-
-df.info()
-
-
-df=tratamento_dados(df)
-df.info()
-
-print(df.head())
-
-
-gera_subplot(df)
-gera_grafico_iterativo(df)
-
-
+def separa_dados_treinamento (df,perc_test):
+    df_treino, df_teste = train_test_split(df, test_size=perc_test, random_state=42)
+    return df_treino,df_teste
