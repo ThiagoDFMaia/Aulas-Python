@@ -51,7 +51,7 @@ def tratamento_dados(df):
 
 def insere_grafico_pizza (dados,axes,titulo,i,j):
   
-    axes[i, j].pie(dados, autopct='%1.1f%%', startangle=90,pctdistance=1.2)
+    axes[i, j].pie(dados, autopct='%1.1f%%', startangle=90,pctdistance=1.2,textprops={'fontsize': 7})
     axes[i, j].set_title(titulo,loc="left")
     axes[i, j].axis('equal')  # Para garantir que o gráfico seja um círculo
     axes[i, j].legend(dados.index, title="Legenda", loc="lower left", bbox_to_anchor=(-0.1, 0), fontsize='small')
@@ -96,7 +96,7 @@ def insere_grafico_histograma(axes, idade, i, j):
 
     for rect, label in zip(patches, n):
         height = rect.get_height()
-        axes[i, j].text(rect.get_x() + rect.get_width() / 2, height, f'{int(label)}', ha='center', va='bottom', fontsize=10, color='black')
+        axes[i, j].text(rect.get_x() + rect.get_width() / 2, height, f'{int(label)}', ha='center', va='bottom', fontsize=7, color='black')
 
     handles = [plt.Line2D([0], [0], color='crimson', lw=4),
                plt.Line2D([0], [0], color='darkblue', lw=4)]
@@ -111,10 +111,10 @@ def insere_grafico_histograma(axes, idade, i, j):
 def gera_subplot(df):
     
     # Criar uma figura com subplots 3x2 (3 linhas, 2 colunas)
-    fig, axes = plt.subplots(3, 2, figsize=(19, 20))
+    fig, axes = plt.subplots(3, 2, figsize=(22, 25))
 
 # Ajustar espaçamento entre os subplots
-    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.3, hspace=0.5)
+    plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0.1, hspace=0.5)
 
     # Gráfico de pizza - Distribuição por Sexo
     axes=insere_grafico_pizza( df['SEXO'].value_counts(),axes,'Distribuição por Sexo',0,0)
@@ -139,7 +139,6 @@ def gera_subplot(df):
     plt.show()
 
 
-
 def gera_grafico_iterativo(df):
     # Criando a figura de subplots (3x2) para compatibilidade com gráficos de pizza
     fig = sp.make_subplots(
@@ -148,8 +147,8 @@ def gera_grafico_iterativo(df):
                         "Distribuição de Raça/Cor", "Distribuição por Estado Civil",
                         "Distribuição de Idades"),
         specs=[[{'type': 'pie'}, {'type': 'xy'}],
-            [{'type': 'bar'}, {'type': 'pie'}],
-            [{'type': 'bar'}, {'type': 'xy'}]]
+               [{'type': 'bar'}, {'type': 'pie'}],
+               [{'type': 'bar'}, {'type': 'xy'}]]
     )
 
     # Gráfico de pizza - Distribuição por Sexo
@@ -171,41 +170,49 @@ def gera_grafico_iterativo(df):
 
     # Histograma - Distribuição de Idades com destaque
     idade = df['idade']
-    n, bins = np.histogram(idade, bins=range(5, 101, 5))  # Calcular o histograma com numpy
+    intervalo_bins = range(5, 101, 5)
+    n, bins = np.histogram(idade, bins=intervalo_bins)  # Calcular o histograma com numpy
     hist_data = pd.Series(n, index=[f'{bins[i]}-{bins[i+1]}' for i in range(len(bins)-1)])
 
-    # Realçar faixa de 15-30 anos e picos
-    colors = ['lightgray'] * len(hist_data)  # Inicialmente todas as barras são cinza
+    # Destacar faixa de 10-35 anos
+    colors = ['darkblue'] * len(hist_data)  # Cor inicial padrão para todas as barras
     for i, bin_range in enumerate(hist_data.index):
         start_age = int(bin_range.split('-')[0])
-        if start_age < 30:
-           colors[i] = 'crimson'
-    for i in hist_data.nlargest(3).index:
-        idx = list(hist_data.index).index(i)
-        colors[idx] = 'orange'
+        if 10 <= start_age < 35:
+            colors[i] = 'crimson'  # Destaca a faixa de idade entre 10 e 35 anos
 
-    fig.add_trace(go.Bar(x=hist_data.index, 
-                        y=hist_data.values, 
-                        marker=dict(color=colors)), row=3, col=1)
+    # Adicionar o histograma ao gráfico
+    fig.add_trace(go.Bar(
+        x=hist_data.index,
+        y=hist_data.values,
+        marker=dict(color=colors, line=dict(color='black', width=1)),
+        text=[f'{int(value)}' for value in hist_data.values],  # Rótulo com os valores
+        textposition='auto'
+    ), row=3, col=1)
 
     # Layout e ajustes
-    fig.update_layout(height=900, width=1200, title_text="Visualizações dos graficos iterativos com o plotly",title_x=0.5,  showlegend=False)
+    fig.update_layout(height=900, width=1200, title_text="Visualizações dos gráficos iterativos com o Plotly", title_x=0.5, showlegend=False)
     fig.update_xaxes(title_text="Ano", row=1, col=2)
     fig.update_yaxes(title_text="Total", row=1, col=2)
     fig.update_xaxes(title_text="Raça/Cor", row=2, col=1)
     fig.update_yaxes(title_text="Total", row=2, col=1)
     fig.update_xaxes(title_text="Idade", row=3, col=1)
-    fig.update_yaxes(title_text="Total", row=3, col=1)
+    fig.update_yaxes(title_text="Total", row=3, col=1, range=[0, max(hist_data.values) + 1000])  # Ajuste do limite do eixo y
 
     # Exibir o gráfico
     fig.show()
 
-def codifica_coluna(coluna):
-    # codifica dados não numericos em numericos
-    le=LabelEncoder()
-    coluna=le.fit_transform(coluna)
 
-    return coluna
+
+def codifica_coluna(dados):
+    # codifica dados não numericos em numericos
+
+    for coluna in dados.columns:
+        if dados[coluna].dtype == 'object':  # Verifica se a coluna é do tipo object
+            le=LabelEncoder()
+            dados[coluna]=le.fit_transform(dados[coluna])
+
+    return dados
 
 def separa_dados_treinamento (df,perc_test):
     df_treino, df_teste = train_test_split(df, test_size=perc_test, random_state=42)
